@@ -1,0 +1,12 @@
+{
+  "name": "com.evrodev.packagefilemodification",
+  "version": "1.0.0",
+  "displayName": "Package File Modification",
+  "description": "Allows other packages to modify packagecache files. Useful for modifying Marrow SDK without worrying about package cache overwriting your changes.",
+  "unity": "2021.3",
+  "unityRelease": "16f1",
+  "author": {
+    "name": "EvroDev"
+  },
+  "hideInEditor": false
+}
