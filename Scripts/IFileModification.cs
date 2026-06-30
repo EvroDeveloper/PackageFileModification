@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EvroDev.FileModLib
 {
@@ -41,14 +42,14 @@ namespace EvroDev.FileModLib
         public string[] newLines;
         public bool inheritWhitespace;
 
-        public InsertLineRequest(int lineIndex, string newLine, bool inheritWhitespace = true)
+        public InsertLineRequest(int lineIndex, string newLine, bool inheritWhitespace = false)
         {
             this.lineIndex = lineIndex;
             newLines = newLine.Split('\n');
             this.inheritWhitespace = inheritWhitespace;
         }
 
-        public InsertLineRequest(int lineIndex, string[] newLines, bool inheritWhitespace = true)
+        public InsertLineRequest(int lineIndex, string[] newLines, bool inheritWhitespace = false)
         {
             this.lineIndex = lineIndex;
             this.newLines = newLines;
@@ -64,10 +65,26 @@ namespace EvroDev.FileModLib
         {
             if (inheritWhitespace)
             {
-                // idfk how to count whitespace ill do it later
+                string whitespace = GetWhitespace(fileLines[lineIndex + lineIndexOffset]);
+                IEnumerable<string> appendedWhitespace = newLines.Select((line) => whitespace + line);
+                fileLines.InsertRange(lineIndex + lineIndexOffset, appendedWhitespace);
             }
-            fileLines.InsertRange(lineIndex + lineIndexOffset, newLines);
+            else
+            {
+                fileLines.InsertRange(lineIndex + lineIndexOffset, newLines);
+            }
             lineIndexOffset += newLines.Length;
+        }
+
+        private static string GetWhitespace(string line)
+        {
+            string outputWhitespace = "";
+            for(int i = 0; i < line.Length; i++)
+            {
+                if(line[i] == ' ' || line[i] == '\t') outputWhitespace += line[i];
+                else break;
+            }
+            return outputWhitespace;
         }
     }
 
@@ -75,11 +92,13 @@ namespace EvroDev.FileModLib
     {
         public int lineIndex;
         public string newLine;
+        public bool inheritWhitespace;
 
-        public ReplaceLineRequest(int lineIndex, string newLine)
+        public ReplaceLineRequest(int lineIndex, string newLine, bool inheritWhitespace = false)
         {
             this.lineIndex = lineIndex;
             this.newLine = newLine;
+            this.inheritWhitespace = inheritWhitespace;
         }
 
         public int GetPriority()
@@ -89,7 +108,21 @@ namespace EvroDev.FileModLib
 
         public void ModifyFile(List<string> fileLines, ref int lineIndexOffset)
         {
-            fileLines[lineIndex + lineIndexOffset] = newLine;
+            if(inheritWhitespace)
+                fileLines[lineIndex + lineIndexOffset] = GetWhitespace(fileLines[lineIndex + lineIndexOffset]) + newLine;
+            else
+                fileLines[lineIndex + lineIndexOffset] = newLine;
+        }
+        
+        private static string GetWhitespace(string line)
+        {
+            string outputWhitespace = "";
+            for(int i = 0; i < line.Length; i++)
+            {
+                if(line[i] == ' ' || line[i] == '\t') outputWhitespace += line[i];
+                else break;
+            }
+            return outputWhitespace;
         }
     }
 
@@ -114,9 +147,15 @@ namespace EvroDev.FileModLib
         }
     }
 
-    public interface IFileModRequester
+    public abstract class FileModRequester
     {
-        public IFileModRequest[] OnModifyFile();
+        internal List<IFileModRequest> fileModRequests = new();
+        public abstract void OnModifyFile();
+
+        public void Request(IFileModRequest request)
+        {
+            fileModRequests.Add(request);
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class)]

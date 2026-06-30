@@ -38,13 +38,15 @@ namespace EvroDev.FileModLib
                     }
                     
 
-                    if (typeof(IFileModRequester).IsAssignableFrom(type))
+                    if (typeof(FileModRequester).IsAssignableFrom(type))
                     {
-                        IFileModRequester modRequester = Activator.CreateInstance(type) as IFileModRequester;
+                        FileModRequester modRequester = Activator.CreateInstance(type) as FileModRequester;
 
                         if(!output.ContainsKey(filePath)) output.Add(filePath, new List<IFileModRequest>());
 
-                        IFileModRequest[] fileModRequestsFromType = modRequester.OnModifyFile();
+                        modRequester.OnModifyFile();
+                        List<IFileModRequest> fileModRequestsFromType = modRequester.fileModRequests;
+
                         foreach(IFileModRequest request in fileModRequestsFromType)
                         {
                             SortAdd(output[filePath], request);
